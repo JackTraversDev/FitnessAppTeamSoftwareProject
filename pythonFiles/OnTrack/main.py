@@ -1,6 +1,6 @@
 import datetime
-import pandas as pd
-from sklearn.linear_model import LinearRegression
+import pandas as pd # pip install pandas
+from sklearn.linear_model import LinearRegression # pip install scikit-learn
 
 weightCheckins = [
     ("2025-01-01", 84.7),

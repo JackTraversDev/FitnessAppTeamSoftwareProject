@@ -1,6 +1,12 @@
 import { getIronSession } from "iron-session"
 import { cookies } from "next/headers"
 
+type SessionData = {
+    user?: {
+        id?: string;
+    };
+};
+
 export default async function IronSessionSettings() {
     try {
         const session = await getIronSession(await cookies(), {
