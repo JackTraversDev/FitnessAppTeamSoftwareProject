@@ -66,7 +66,7 @@ export default function LoginPage() {
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_35%,rgba(132,255,0,0.15),transparent_22%),radial-gradient(circle_at_82%_70%,rgba(132,255,0,0.08),transparent_20%),radial-gradient(circle_at_50%_100%,rgba(80,80,255,0.08),transparent_25%)]" />
 
         <div className="relative z-10 w-full max-w-[820px] rounded-[28px] border border-white/10 bg-black/80 px-8 py-10 shadow-[0_0_0_1px_rgba(255,255,255,0.03),0_30px_80px_rgba(0,0,0,0.6)] backdrop-blur-sm md:px-14 md:py-12">
-          <div className="mb-16 text-[22px] font-medium tracking-tight">app name</div>
+          <div className="mb-16 text-[22px] font-medium tracking-tight">ByteFitness</div>
 
           <div className="mx-auto max-w-[390px]">
             <div className="mb-10 text-center">

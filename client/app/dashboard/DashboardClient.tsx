@@ -230,7 +230,7 @@ const [showMealModal, setShowMealModal] = useState(false);
       <div className="flex min-h-screen">
         <aside className="flex w-[250px] flex-col justify-between border-r border-white/10 bg-white/[0.03]">
           <div>
-            <div className="px-6 py-7 text-[22px] font-medium">app name</div>
+            <div className="px-6 py-7 text-[22px] font-medium">ByteFitness</div>
 
             <nav className="mt-2 space-y-2 px-2">
               <NavItem label="Dashboard" href="/dashboard" />
