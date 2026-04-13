@@ -13,22 +13,29 @@ export async function GET() {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    const user = await User.findById(session.user.id).select(
-      "firstName email height weight dateOfBirth gender goal"
-    );
+    const user = await User.findById(session.user.id).select("weight checkIns");
 
     if (!user) {
       return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
 
-    return NextResponse.json(user, { status: 200 });
+    const sortedCheckIns = [...user.checkIns].sort(
+      (a: { date: Date }, b: { date: Date }) =>
+        new Date(b.date).getTime() - new Date(a.date).getTime()
+    );
+
+    return NextResponse.json(
+      {
+        currentWeight: user.weight,
+        checkIns: sortedCheckIns,
+      },
+      { status: 200 }
+    );
   } catch (error) {
     console.error(error);
     return NextResponse.json(
-      { message: "Something went wrong while fetching the user." },
+      { message: "Something went wrong while fetching check-ins." },
       { status: 500 }
     );
   }
 }
-
-

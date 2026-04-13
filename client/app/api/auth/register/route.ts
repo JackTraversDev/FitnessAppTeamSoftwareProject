@@ -36,3 +36,5 @@ export async function POST(req: NextRequest){
         return NextResponse.json({message: "An error occured during the registration process.. please try again later."}, {status: 500})
     }
 }
+
+

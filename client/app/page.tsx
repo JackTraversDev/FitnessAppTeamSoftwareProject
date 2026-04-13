@@ -54,21 +54,10 @@ export default function HomePage() {
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_15%_35%,rgba(132,255,0,0.12),transparent_22%),radial-gradient(circle_at_88%_30%,rgba(132,255,0,0.08),transparent_20%)]" />
 
         <header className="relative z-10 grid grid-cols-3 items-center">
-          <div className="text-xl font-medium tracking-tight">app name</div>
+          <div className="text-xl font-medium tracking-tight">ByteFitness</div>
 
           <nav className="hidden justify-center gap-8 text-xs text-white/60 md:flex">
-            <Link href="/" className="text-white transition hover:text-lime-400">
-              Home
-            </Link>
-            <Link href="/" className="transition hover:text-lime-400">
-              Link
-            </Link>
-            <Link href="/" className="transition hover:text-lime-400">
-              Link
-            </Link>
-            <Link href="/" className="transition hover:text-lime-400">
-              Link
-            </Link>
+
           </nav>
 
           <div className="flex justify-end">

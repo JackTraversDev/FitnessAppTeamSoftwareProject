@@ -3,6 +3,7 @@
 import axios from "axios";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 
 type UserData = {
   firstName: string;
@@ -28,6 +29,12 @@ type MealGroup = {
   category: "Breakfast" | "Lunch" | "Dinner" | "Snacks";
   items: MealItem[];
 };
+
+type CheckIn = {
+date: string;
+weight: number;
+};
+
 
 type DiaryData = {
   diary: {
@@ -99,17 +106,29 @@ const [showMealModal, setShowMealModal] = useState(false);
     sugar: "",
   });
 
+  const router = useRouter();
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [submittingLogout, setSubmittingLogout] = useState(false);
+  const [submittingDeleteAccount, setSubmittingDeleteAccount] = useState(false);
+
+  const [checkIns, setCheckIns] = useState<CheckIn[]>([]);
+  const [showCheckInModal, setShowCheckInModal] = useState(false);
+  const [checkInWeight, setCheckInWeight] = useState("");
+  const [submittingCheckIn, setSubmittingCheckIn] = useState(false);
+  
   const [waterAmount, setWaterAmount] = useState("");
 
   async function loadDashboard() {
     try {
-      const [userRes, diaryRes] = await Promise.all([
+      const [userRes, diaryRes, checkInsRes] = await Promise.all([
         axios.get("/api/user/me"),
         axios.get("/api/diary/today"),
+        axios.get("/api/user/checkins"),
       ]);
 
       setUser(userRes.data);
       setDiaryData(diaryRes.data);
+      setCheckIns(checkInsRes.data.checkIns);
     } catch (error) {
       console.error(error);
     } finally {
@@ -197,6 +216,64 @@ const [showMealModal, setShowMealModal] = useState(false);
     }
   }
 
+  async function handleLogout() {
+  try {
+    setSubmittingLogout(true);
+    await axios.post("/api/auth/logout");
+    router.push("/login");
+    router.refresh();
+  } catch (error) {
+    console.error(error);
+    alert("Failed to log out.");
+  } finally {
+    setSubmittingLogout(false);
+  }
+}
+
+async function handleDeleteAccount() {
+  const confirmed = window.confirm(
+    "Are you sure you want to delete your account? This cannot be undone."
+  );
+
+  if (!confirmed) return;
+
+  try {
+    setSubmittingDeleteAccount(true);
+    await axios.delete("/api/user/delete");
+    router.push("/register");
+    router.refresh();
+  } catch (error) {
+    console.error(error);
+    alert("Failed to delete account.");
+  } finally {
+    setSubmittingDeleteAccount(false);
+  }
+}
+
+  async function handleCheckIn() {
+  try {
+    if (!checkInWeight || Number(checkInWeight) <= 0) {
+      alert("Enter a valid weight.");
+      return;
+    }
+
+    setSubmittingCheckIn(true);
+
+    await axios.post("/api/user/checkin", {
+      weight: Number(checkInWeight),
+    });
+
+    setCheckInWeight("");
+    setShowCheckInModal(false);
+    await loadDashboard();
+  } catch (error) {
+    console.error(error);
+    alert("Failed to save check-in.");
+  } finally {
+    setSubmittingCheckIn(false);
+  }
+}
+
   const totalRows = useMemo(() => {
     if (!diaryData) return null;
 
@@ -233,23 +310,43 @@ const [showMealModal, setShowMealModal] = useState(false);
             <div className="px-6 py-7 text-[22px] font-medium">ByteFitness</div>
 
             <nav className="mt-2 space-y-2 px-2">
-              <NavItem label="Dashboard" href="/dashboard" />
               <NavItem label="Diary" href="/dashboard" active />
-              <NavItem label="Timer" href="/timer" />
             </nav>
           </div>
-
-          <div className="p-4">
-            <button className="flex w-full items-center justify-between rounded-2xl border border-white/10 bg-white/[0.02] px-4 py-4 text-left transition hover:border-white/20">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-lime-400 text-black">
-                  <ProfileIcon />
-                </div>
-                <span className="text-sm text-white/90">{user.firstName}</span>
-              </div>
-              <span className="text-white/30">›</span>
-            </button>
+    <div className="relative p-4">
+      <button
+        onClick={() => setShowProfileMenu((prev) => !prev)}
+        className="flex w-full items-center justify-between rounded-2xl border border-white/10 bg-white/[0.02] px-4 py-4 text-left transition hover:border-white/20"
+      >
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-lime-400 text-black">
+            <ProfileIcon />
           </div>
+          <span className="text-sm text-white/90">{user.firstName}</span>
+        </div>
+        <span className="text-white/30">{showProfileMenu ? "⌄" : "›"}</span>
+      </button>
+
+      {showProfileMenu && (
+        <div className="absolute bottom-[84px] left-4 right-4 z-40 overflow-hidden rounded-2xl border border-white/10 bg-[#111111] shadow-2xl">
+          <button
+            onClick={handleLogout}
+            disabled={submittingLogout}
+            className="w-full border-b border-white/5 px-4 py-3 text-left text-sm text-white/85 transition hover:bg-white/[0.05] disabled:opacity-60"
+          >
+            {submittingLogout ? "Logging out..." : "Logout"}
+          </button>
+
+          <button
+            onClick={handleDeleteAccount}
+            disabled={submittingDeleteAccount}
+            className="w-full px-4 py-3 text-left text-sm text-red-400 transition hover:bg-white/[0.05] disabled:opacity-60"
+          >
+            {submittingDeleteAccount ? "Deleting account..." : "Delete Account"}
+          </button>
+        </div>
+      )}
+    </div>
         </aside>
 
         <section className="flex-1 px-8 py-6">
@@ -257,15 +354,23 @@ const [showMealModal, setShowMealModal] = useState(false);
             <h1 className="text-5xl font-medium tracking-tight">Diary</h1>
 
             <div className="flex gap-4">
+              <button
+                onClick={() => setShowCheckInModal(true)}
+                className="rounded-2xl border border-white/20 px-7 py-4 text-base text-white/90 transition hover:border-lime-400 hover:text-lime-400"
+              >
+                Check In
+              </button>
+
               <button className="rounded-2xl border border-white/20 px-7 py-4 text-base text-white/90 transition hover:border-white/40">
                 Edit Goals
               </button>
-            <button
-            onClick={() => setShowMealModal(true)}
-            className="rounded-2xl bg-lime-400 px-8 py-4 text-base font-semibold text-black transition hover:bg-lime-300"
-            >
-            + Add Meal
-            </button>
+
+              <button
+                onClick={() => setShowMealModal(true)}
+                className="rounded-2xl bg-lime-400 px-8 py-4 text-base font-semibold text-black transition hover:bg-lime-300"
+              >
+                + Add Meal
+              </button>
             </div>
           </div>
 
@@ -435,6 +540,29 @@ const [showMealModal, setShowMealModal] = useState(false);
               </div>
             </div>
           </div>
+          <div className="mt-10">
+          <h2 className="mb-5 text-5xl font-medium tracking-tight">Weight Check-Ins</h2>
+            <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04]">
+              <div className="grid grid-cols-2 px-5 py-4 text-sm uppercase tracking-wide text-white/30">
+                <div>Date</div>
+                <div>Weight</div>
+              </div>
+
+              {checkIns.length === 0 ? (
+                <div className="px-5 py-6 text-white/40">No check-ins yet.</div>
+              ) : (
+                checkIns.slice(0, 7).map((checkIn, index) => (
+                  <div
+                    key={index}
+                    className="grid grid-cols-2 border-t border-white/5 px-5 py-4 text-white/85"
+                  >
+                    <div>{formatCheckInDate(checkIn.date)}</div>
+                    <div>{checkIn.weight} kg</div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
         </section>
       </div>
                       {showMealModal && (
@@ -573,6 +701,37 @@ const [showMealModal, setShowMealModal] = useState(false);
           </div>
         </Modal>
       )}
+      {showCheckInModal && (
+      <Modal
+        title="Daily Weight Check-In"
+        onClose={() => setShowCheckInModal(false)}
+      >
+        <div className="space-y-4">
+          <ModalInput
+            placeholder="Enter weight in kg"
+            type="number"
+            value={checkInWeight}
+            onChange={setCheckInWeight}
+          />
+
+          <div className="flex gap-3 pt-2">
+            <button
+              onClick={() => setShowCheckInModal(false)}
+              className="h-[52px] flex-1 rounded-2xl border border-white/20 text-white/80 transition hover:border-white/40"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleCheckIn}
+              disabled={submittingCheckIn}
+              className="h-[52px] flex-1 rounded-2xl bg-lime-400 font-semibold text-black transition hover:bg-lime-300 disabled:opacity-60"
+            >
+              {submittingCheckIn ? "Saving..." : "Save Check-In"}
+            </button>
+          </div>
+        </div>
+      </Modal>
+    )}
     </main>
   );
 }
@@ -709,6 +868,13 @@ function ModalInput({
   );
 }
 
+function formatCheckInDate(date: string) {
+  return new Date(date).toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+}
 
 function CalorieGauge({ percent }: { percent: number }) {
   const clampedPercent = Math.max(0, Math.min(percent, 100));
